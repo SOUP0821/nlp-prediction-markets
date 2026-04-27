@@ -83,7 +83,7 @@ class PredictionMarketSystem:
                 'nb_score': (group['nb_raw'] * weights).sum()
             })
 
-        return text_df.groupby(pd.Grouper(freq='12H')).apply(weighted_avg)
+        return text_df.groupby(pd.Grouper(freq="12h")).apply(weighted_avg)
 
     # MAIN SIMULATION + METRICS
     def run_simulation(self, kalshi_df, sentiment_df, model_name='finbert', threshold=0.20):
@@ -257,13 +257,13 @@ if __name__ == "__main__":
 
     KALSHI_DATA_FILE = "data/kalshi_prices.csv"
     SOCIAL_DATA_FILE = "data/social_feed.csv"
-    KAGGLE_TRAIN_FILE = "data/kaggle_train.csv"
+    NB_TRAIN_FILE = "data/nbtrain.csv"
 
     system = PredictionMarketSystem(initial_capital=1000.0)
 
     # Train NB
     try:
-        train_df = load_data(KAGGLE_TRAIN_FILE)
+        train_df = load_data(NB_TRAIN_FILE)
         system.train_naive_bayes(train_df)
     except Exception as e:
         print(f"Skipping NB training: {e}")
