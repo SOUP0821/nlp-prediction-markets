@@ -4,6 +4,7 @@ import os
 from transformers import pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
+import matplotlib.pyplot as plt
 
 class PredictionMarketSystem:
     def __init__(self, initial_capital=1000.0):
@@ -174,6 +175,56 @@ class PredictionMarketSystem:
 
         return final_value, roi, directional_accuracy, mae
 
+    # LAG ANALYSIS
+    def lag_time_analysis(self, kalshi_df, sentiment_df, model_name='finbert', max_lag=24):
+        """
+        Computes lag correlation between sentiment and price movement.
+
+        max_lag = number of periods (12H windows)
+        """
+        merged_df = pd.merge(
+            kalshi_df, sentiment_df,
+            left_index=True, right_index=True, how='left'
+        )
+
+        target_col = f'{model_name}_score'
+
+        merged_df[target_col] = merged_df[target_col].ffill(limit=2)
+        merged_df = merged_df.dropna(subset=[target_col, 'yes_price'])
+
+        # Use price change, not raw price.
+        merged_df['price_change'] = merged_df['yes_price'].diff()
+
+        lags = range(-max_lag, max_lag + 1)
+        correlations = []
+
+        for lag in lags:
+            shifted_sentiment = merged_df[target_col].shift(lag)
+            corr = shifted_sentiment.corr(merged_df['price_change'])
+            correlations.append(corr)
+
+        lag_df = pd.DataFrame({
+            'lag': list(lags),
+            'correlation': correlations
+        })
+
+        best_row = lag_df.iloc[lag_df['correlation'].abs().idxmax()]
+        best_lag = int(best_row['lag'])
+        best_corr = best_row['correlation']
+
+        print("\n--- LAG ANALYSIS ---")
+        print(f"Best Lag: {best_lag} periods")
+        print(f"Correlation at Best Lag: {best_corr:.4f}")
+
+        if best_lag > 0:
+            print("Interpretation: Sentiment LEADS price")
+        elif best_lag < 0:
+            print("Interpretation: Price LEADS sentiment")
+        else:
+            print("Interpretation: Instantaneous relationship")
+
+        return lag_df, best_lag, best_corr
+
 
 # FILE LOADING
 def load_data(file_path, time_col='timestamp'):
@@ -189,6 +240,16 @@ def load_data(file_path, time_col='timestamp'):
 
     df[time_col] = pd.to_datetime(df[time_col])
     return df
+
+
+def plot_lag_analysis(lag_df):
+    plt.figure()
+    plt.plot(lag_df['lag'], lag_df['correlation'])
+    plt.axvline(0)
+    plt.title("Lag vs Correlation (Sentiment vs Price Change)")
+    plt.xlabel("Lag (Periods)")
+    plt.ylabel("Correlation")
+    plt.show()
 
 
 # MAIN EXECUTION
@@ -219,6 +280,13 @@ if __name__ == "__main__":
     finbert_res = system.run_simulation(kalshi_prices, sentiment_df, 'finbert')
     nb_res = system.run_simulation(kalshi_prices, sentiment_df, 'nb')
 
+    lag_df, best_lag, best_corr = system.lag_time_analysis(
+        kalshi_prices,
+        sentiment_df,
+        model_name='finbert',
+        max_lag=24
+    )
+
     # Results
     print("\nFINAL RESULTS")
 
@@ -227,3 +295,5 @@ if __name__ == "__main__":
 
     print(f"Naive Bayes -> Final: ${nb_res[0]:.2f}, ROI: {nb_res[1]:.2f}%")
     print(f"               Directional Acc: {nb_res[2]:.3f}, MAE: {nb_res[3]:.4f}")
+
+    plot_lag_analysis(lag_df)
