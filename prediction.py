@@ -98,7 +98,7 @@ class PredictionMarketSystem:
         merged_df[target_col] = merged_df[target_col].ffill(limit=2)
         merged_df = merged_df.dropna(subset=[target_col, 'yes_price'])
 
-        # 3-CLASS SIGNAL (WITH HOLD ZONE)
+        # 3 CLASS SIGNAL (WITH HOLD ZONE)
         neutral_band = threshold / 2
 
         merged_df['signal'] = np.select(
