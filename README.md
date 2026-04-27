@@ -151,8 +151,6 @@ sentiment is just reacting
 
 ---
 
-This is the BIG one because it answers:
-
 > “Is social media actually useful for predicting markets?”
 
 ---
