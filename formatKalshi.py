@@ -45,7 +45,7 @@ def run_interactive() -> None:
         print("need a real terminal for prompts", file=sys.stderr)
         sys.exit(2)
 
-    print("Turn hourly data into 12-hour rows (last price in each window, ÷100 on the price).\n")
+    print("Turn hourly data into 12-hour rows (last price in each window).\n")
 
     in_path = _prompt("Path to hourly dataset CSV", "")
     if not in_path:
@@ -71,6 +71,7 @@ def run_interactive() -> None:
         print("didn't recognize that, doing whole file", file=sys.stderr)
 
     period_hours = _prompt_float("hours per bucket (usually 12)", 12.0)
+    divide_by_100 = _prompt("Divide prices by 100? (y/n)", "y").lower() != "n"
 
     out = hourly_csv_to_12h(
         in_path,
@@ -78,17 +79,26 @@ def run_interactive() -> None:
         period_hours=period_hours,
         slice_start=slice_start,
         slice_days=slice_days,
+        divide_by_100=divide_by_100,
     )
     tag = f"sliced {slice_days}d from {slice_start}" if slice_start else "full file"
     print(f"\n{len(out)} rows → {out_path} ({tag})")
 
 
-def _scale_price(raw) -> float:
+def _scale_price(raw, divide_by_100: bool = True) -> float:
     d = Decimal(str(raw).strip())
-    return float(d / Decimal("100"))
+    if divide_by_100:
+        return float(d / Decimal("100"))
+    return float(d)
 
 
-def _bucket_last(df: pd.DataFrame, raw_col: str, period_hours: float, anchor: pd.Timestamp | None):
+def _bucket_last(
+    df: pd.DataFrame,
+    raw_col: str,
+    period_hours: float,
+    anchor: pd.Timestamp | None,
+    divide_by_100: bool,
+):
     df = df.sort_values("timestamp").reset_index(drop=True)
     if df.empty:
         return pd.DataFrame(columns=["timestamp", "yes_price"])
@@ -107,7 +117,12 @@ def _bucket_last(df: pd.DataFrame, raw_col: str, period_hours: float, anchor: pd
             w0 = w1
             continue
         tail = chunk.iloc[-1]
-        rows.append({"timestamp": w0, "yes_price": _scale_price(tail[raw_col])})
+        rows.append(
+            {
+                "timestamp": w0,
+                "yes_price": _scale_price(tail[raw_col], divide_by_100=divide_by_100),
+            }
+        )
         if tail["timestamp"] >= last_ts:
             break
         w0 = w1
@@ -137,6 +152,7 @@ def hourly_csv_to_12h(
     period_hours: float = 12.0,
     slice_start: pd.Timestamp | None = None,
     slice_days: float = 7.0,
+    divide_by_100: bool = True,
 ) -> pd.DataFrame:
     df = pd.read_csv(input_path)
     if df.empty:
@@ -162,7 +178,7 @@ def hourly_csv_to_12h(
         df = df[(df["timestamp"] >= slice_start) & (df["timestamp"] < end)]
         anchor = slice_start
 
-    agg = _bucket_last(df, raw, period_hours, anchor)
+    agg = _bucket_last(df, raw, period_hours, anchor, divide_by_100=divide_by_100)
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     agg.to_csv(output_path, index=False)
     return agg
@@ -173,11 +189,16 @@ def main():
         run_interactive()
         return
 
-    p = argparse.ArgumentParser(description="Hourly CSV → 12h last-price bars, price ÷ 100.")
+    p = argparse.ArgumentParser(description="Hourly CSV → 12h last-price bars.")
     p.add_argument("-i", "--interactive", action="store_true", help="prompts instead of flags")
     p.add_argument("--input", default="data/gas_kalshi.csv", help="hourly CSV")
     p.add_argument("--output", default="data/gas_kalshi_12h.csv", help="where to write")
     p.add_argument("--period-hours", type=float, default=12.0)
+    p.add_argument(
+        "--no-divide-100",
+        action="store_true",
+        help="Keep raw prices as-is (skip dividing by 100).",
+    )
     p.add_argument("--from-datetime", default=None, metavar="ISO")
     p.add_argument("--year", type=int, default=None)
     p.add_argument("--month", type=int, default=None)
@@ -197,6 +218,7 @@ def main():
         period_hours=args.period_hours,
         slice_start=start,
         slice_days=args.slice_days,
+        divide_by_100=not args.no_divide_100,
     )
     tag = f"slice {args.slice_days}d from {start}" if start else "full file"
     print(f"{len(out)} rows → {args.output} ({tag})")
