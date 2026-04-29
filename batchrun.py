@@ -16,47 +16,57 @@ MARKETS = [
     {
         "name": "Apple CEO",
         "market_data": "data/kalshi/appleceo_market.csv",
-        "social_data": "data/news/appleCEO_headlines_data.csv",
+        "social_data": "data/complete/appleCEO_complete_data.csv",
     },
     {
         "name": "Celtics",
         "market_data": "data/kalshi/nba_market_data_celtics.csv",
-        "social_data": "data/news/celtics_headlines_data.csv",
+        "social_data": "data/complete/celtics_complete_data.csv",
     },
     {
         "name": "Spurs",
         "market_data": "data/kalshi/nba_market_data_spurs.csv",
-        "social_data": "data/news/spurs_headlines_data.csv",
+        "social_data": "data/complete/spurs_complete_data.csv",
     },
     {
         "name": "OKC",
         "market_data": "data/kalshi/nba_market_data_okc.csv",
-        "social_data": "data/news/okc_headlines_data.csv",
+        "social_data": "data/complete/okc_complete_data.csv",
     },
     {
         "name": "England",
         "market_data": "data/kalshi/worldcup_market_data_england.csv",
-        "social_data": "data/news/england_headlines_data.csv",
+        "social_data": "data/complete/england_worldcup_complete_data.csv",
     },
     {
         "name": "France",
         "market_data": "data/kalshi/worldcup_market_data_france.csv",
-        "social_data": "data/news/france_headlines_data.csv",
+        "social_data": "data/complete/france_complete_data.csv",
     },
     {
         "name": "Spain",
         "market_data": "data/kalshi/worldcup_market_data_spain.csv",
-        "social_data": "data/news/spain_headlines_data.csv",
+        "social_data": "data/complete/spain_worldcup_complete_data.csv",
     },
     {
         "name": "Gas Price",
         "market_data": "data/kalshi/gas_kalshi_12h.csv",
-        "social_data": "data/news/gas_price_headlines_data.csv",
+        "social_data": "data/complete/gas_kalshi_complete_data.csv",
     },
     {
         "name": "Jobless Claims",
         "market_data": "data/kalshi/jobless_market.csv",
-        "social_data": "data/news/unemployment_headlines_data.csv",
+        "social_data": "data/complete/kalshi_jobless_claims_at_least_210k_apr3_apr9_market_complete_data.csv",
+    },
+    {
+        "name": "Kevin Warsh",
+        "market_data": "data/kalshi/kevin_warsh_market.csv",
+        "social_data": "data/complete/kalshi_fed_chair_kevin_warsh_jan9_feb1_market_complete_data.csv",
+    },
+    {
+        "name": "Rick Rieder",
+        "market_data": "data/kalshi/rick_rieder_market.csv",
+        "social_data": "data/complete/kalshi_fed_chair_rick_rieder_jan9_jan31_market_complete_data.csv",
     },
 ]
 

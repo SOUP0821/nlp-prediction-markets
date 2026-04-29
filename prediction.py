@@ -12,7 +12,7 @@ class PredictionMarketSystem:
         print("Initializing NLP Models...")
 
         # Use a general news/social sentiment model for better overlap on sports headlines.
-        self.sentiment_model_name = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+        self.sentiment_model_name = "ProsusAI/finbert"
         try:
             self.finbert = pipeline("sentiment-analysis", model=self.sentiment_model_name)
         except Exception as e:

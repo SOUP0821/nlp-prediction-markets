@@ -1,0 +1,12 @@
+Market Name,Best Lag,Best Lag Corr,FinBERT ROI (Lag 0),FinBERT Acc (Lag 0),NB ROI (Lag 0),NB Acc (Lag 0),FinBERT ROI (Lag 1),FinBERT Acc (Lag 1),NB ROI (Lag 1),NB Acc (Lag 1),FinBERT ROI (Best Lag),FinBERT Acc (Best Lag),Error
+Apple CEO,-3.0,0.0894,-89.16,0.643,-94.9,0.429,-95.67,0.429,-17.27,0.381,393.74,0.571,
+Celtics,,,,,,,,,,,,,The size of tensor a (1498) must match the size of tensor b (512) at non-singleton dimension 1
+Spurs,,,,,,,,,,,,,The size of tensor a (1498) must match the size of tensor b (512) at non-singleton dimension 1
+OKC,,,,,,,,,,,,,The size of tensor a (1498) must match the size of tensor b (512) at non-singleton dimension 1
+England,,,,,,,,,,,,,The size of tensor a (522) must match the size of tensor b (512) at non-singleton dimension 1
+France,,,,,,,,,,,,,The size of tensor a (522) must match the size of tensor b (512) at non-singleton dimension 1
+Spain,,,,,,,,,,,,,The size of tensor a (522) must match the size of tensor b (512) at non-singleton dimension 1
+Gas Price,,,,,,,,,,,,,The size of tensor a (566) must match the size of tensor b (512) at non-singleton dimension 1
+Jobless Claims,3.0,0.4464,-28.92,0.833,-28.92,0.8,-31.42,0.8,-31.42,0.75,24.68,1.0,
+Kevin Warsh,,,,,,,,,,,,,The size of tensor a (522) must match the size of tensor b (512) at non-singleton dimension 1
+Rick Rieder,,,,,,,,,,,,,The size of tensor a (1343) must match the size of tensor b (512) at non-singleton dimension 1
