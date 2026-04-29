@@ -10,12 +10,16 @@ class PredictionMarketSystem:
     def __init__(self, initial_capital=1000.0):
         self.initial_capital = initial_capital
         print("Initializing NLP Models...")
-        
-        # Try to load FinBERT, but don't crash if it's missing
+
+        # Use a general news/social sentiment model for better overlap on sports headlines.
+        self.sentiment_model_name = "cardiffnlp/twitter-roberta-base-sentiment-latest"
         try:
-            self.finbert = pipeline("sentiment-analysis", model="ProsusAI/finbert")
+            self.finbert = pipeline("sentiment-analysis", model=self.sentiment_model_name)
         except Exception as e:
-            print(f"Warning: Could not load FinBERT. Ensure transformers/torch are installed. Error: {e}")
+            print(
+                "Warning: Could not load sentiment model "
+                f"({self.sentiment_model_name}). Error: {e}"
+            )
             self.finbert = None
 
         self.vectorizer = TfidfVectorizer(max_features=5000)
@@ -35,14 +39,26 @@ class PredictionMarketSystem:
         if not self.finbert:
             return [0.0] * len(texts)
 
-        mapping = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}
         results = []
 
         for i in range(0, len(texts), batch_size):
             batch = texts[i : i + batch_size]
             outputs = self.finbert(batch)
             for res in outputs:
-                score = mapping.get(res["label"], 0.0) * res["score"]
+                label = str(res["label"]).lower()
+                confidence = float(res["score"])
+
+                # Support common HF sentiment label schemes:
+                # - positive/neutral/negative
+                # - LABEL_2/LABEL_1/LABEL_0 (twitter-roberta style)
+                if label in {"positive", "label_2"}:
+                    polarity = 1.0
+                elif label in {"negative", "label_0"}:
+                    polarity = -1.0
+                else:
+                    polarity = 0.0
+
+                score = polarity * confidence
                 results.append(score)
         return results
 
@@ -133,6 +149,12 @@ class PredictionMarketSystem:
             portfolio_value = capital + (contracts * price if position == "yes" else 0.0) + (contracts * (1 - price) if position == "no" else 0.0)
             portfolio_history.append(portfolio_value)
 
+        if not portfolio_history:
+            raise ValueError(
+                f"No rows left to simulate for model={model_name}, lag={predict_lag}. "
+                "Likely caused by lag shift + sparse overlap."
+            )
+
         # Wrap up the simulation and calculate ROI
         merged_df["portfolio_value"] = portfolio_history
         final_value = merged_df["portfolio_value"].iloc[-1]
@@ -181,7 +203,19 @@ class PredictionMarketSystem:
             correlations.append(corr)
 
         lag_df = pd.DataFrame({"lag": list(lags), "correlation": correlations})
-        best_row = lag_df.iloc[lag_df["correlation"].abs().idxmax()]
+
+        # Guard against flat/degenerate signals where all correlations are NaN.
+        valid_corr = lag_df.dropna(subset=["correlation"])
+        if valid_corr.empty:
+            print("\n--- LAG ANALYSIS ---")
+            print("Best Lag: 0 periods")
+            print("Correlation at Best Lag: nan")
+            print(
+                "Interpretation: No valid lag correlation (signal likely constant or insufficient variance)."
+            )
+            return lag_df, 0, np.nan
+
+        best_row = valid_corr.loc[valid_corr["correlation"].abs().idxmax()]
         best_lag = int(best_row["lag"])
         best_corr = best_row["correlation"]
 
